@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="Fundle — her gün bir gizli futbolcuyu özelliklerinden tahmin et.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<title>Fundleᵀᴿ — Futbolcuyu tahmin et!</title>
+<style>
+  :root{
+    /* --- Tema --- */
+    --bg-color:#0f172a;
+    --bg-deep:#0b1220;
+    --card-bg:#1e293b;
+    --card-bg-2:#223049;
+    --line:#334155;
+    --text-color:#f8fafc;
+    --muted:#94a3b8;
+    --muted-2:#7b879c;
+    --correct:#29AB87;
+    --wrong:#fd5c63;
+    --near:#f5a524;
+    --accent:#3b82f6;
+    --brand:#38bdf8;
+    --radius:12px;
+    --shadow-lg:0 24px 60px -18px rgba(2,6,23,.85);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background-color:var(--bg-color);
+    color:var(--text-color);
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:clamp(16px,4vw,34px) 14px 44px;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* Arka plan ışıması */
+  body::before{
+    content:"";position:fixed;inset:-20% -10% auto;height:70vh;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(60% 50% at 50% 0%, rgba(56,189,248,.16), transparent 70%),
+      radial-gradient(45% 40% at 12% 8%, rgba(59,130,246,.12), transparent 70%),
+      radial-gradient(45% 40% at 88% 12%, rgba(41,171,135,.10), transparent 70%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35;
+    background-image:radial-gradient(rgba(148,163,184,.14) 1px, transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,transparent 55%);
+            mask-image:linear-gradient(180deg,#000 0%,transparent 55%);
+  }
+
+  button{font:inherit}
+  ::selection{background:rgba(56,189,248,.3)}
+
+  .app{width:100%;max-width:680px;display:flex;flex-direction:column;gap:14px}
+
+  /* Üst bar */
+  .topbar{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:46px;height:46px;flex:none;border-radius:15px;display:grid;place-items:center;
+    background:linear-gradient(150deg,rgba(56,189,248,.22),rgba(41,171,135,.12));
+    border:1px solid rgba(56,189,248,.3);
+    box-shadow:0 10px 26px -12px rgba(56,189,248,.7), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .logo svg{width:23px;height:23px;color:var(--brand)}
+  .titles{flex:1;min-width:0}
+  h1{
+    font-size:clamp(24px,6.4vw,30px);line-height:1.05;font-weight:800;letter-spacing:-.03em;
+    background:linear-gradient(92deg,#e0f2fe,#38bdf8 55%,#7dd3fc);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+  .actions{display:flex;gap:8px;flex:none}
+
+  .icon-btn{
+    width:40px;height:40px;border-radius:12px;display:grid;place-items:center;cursor:pointer;
+    background:rgba(30,41,59,.72);border:1px solid var(--line);color:var(--muted);
+    transition:.18s;backdrop-filter:blur(6px);
+  }
+  .icon-btn:hover{color:#fff;border-color:var(--brand);background:rgba(56,189,248,.14);transform:translateY(-1px)}
+  .icon-btn:active{transform:none}
+  .icon-btn svg{width:18px;height:18px}
+
+  /* Meta şerit */
+  .meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted-2)}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;
+    background:rgba(30,41,59,.6);border:1px solid var(--line);font-variant-numeric:tabular-nums;
+  }
+  .pill b{color:var(--text-color);font-weight:600}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--correct);box-shadow:0 0 0 3px rgba(41,171,135,.16)}
+
+  /* Arama */
+  .search-wrap{position:relative}
+  .search-box{
+    display:flex;gap:8px;padding:7px 7px 7px 14px;align-items:center;
+    background:rgba(30,41,59,.85);border:1px solid var(--line);border-radius:14px;
+    transition:border-color .18s, box-shadow .18s, background .18s;
+  }
+  .search-box:focus-within{
+    border-color:rgba(56,189,248,.65);background:rgba(30,41,59,1);
+    box-shadow:0 0 0 4px rgba(56,189,248,.12), 0 14px 34px -18px rgba(56,189,248,.6);
+  }
+  .search-box.shake{animation:shake .4s}
+  @keyframes shake{
+    10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}
+    30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}
+  }
+  .s-ico{color:var(--muted-2);flex:none;display:grid;place-items:center}
+  .s-ico svg{width:17px;height:17px}
+  .search-box:focus-within .s-ico{color:var(--brand)}
+  input[type=text]{
+    flex:1;min-width:0;border:0;background:transparent;color:#fff;font-size:15.5px;
+    padding:8px 2px;outline:none;
+  }
+  input[type=text]::placeholder{color:#64748b}
+  input:disabled{cursor:not-allowed}
+
+  .btn{
+    flex:none;border:0;border-radius:10px;padding:11px 18px;cursor:pointer;font-weight:650;font-size:14px;
+    color:#fff;background:linear-gradient(180deg,#4f8ff7,var(--accent));
+    box-shadow:0 8px 20px -8px rgba(59,130,246,.85), inset 0 1px 0 rgba(255,255,255,.22);
+    transition:.16s;
+  }
+  .btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+
+  .autocomplete-items{
+    position:absolute;z-index:60;top:calc(100% + 8px);left:0;right:0;overflow:hidden;
+    background:rgba(23,32,48,.98);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow-lg);backdrop-filter:blur(14px);
+    max-height:288px;overflow-y:auto;display:none;
+  }
+  .autocomplete-items.open{display:block;animation:pop .16s ease-out}
+  @keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .ac-item{display:flex;align-items:center;gap:10px;padding:10px 13px;cursor:pointer;border-bottom:1px solid rgba(51,65,85,.55)}
+  .ac-item:last-child{border-bottom:0}
+  .ac-item:hover,.ac-item.active{background:rgba(56,189,248,.11)}
+  .ac-item.used{opacity:.42;cursor:not-allowed}
+  .ac-name{flex:1;min-width:0;font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ac-name em{font-style:normal;color:var(--brand);font-weight:700}
+  .ac-meta{flex:none;font-size:11px;color:var(--muted-2);white-space:nowrap}
+  .ac-none{padding:14px 13px;font-size:13.5px;color:var(--muted);text-align:center}
+  .ac-items::-webkit-scrollbar,.board::-webkit-scrollbar,.modal-card::-webkit-scrollbar{width:8px}
+  .ac-items::-webkit-scrollbar-thumb,.board::-webkit-scrollbar-thumb,.modal-card::-webkit-scrollbar-thumb{background:#334155;border-radius:99px}
+  .autocomplete-items::-webkit-scrollbar-thumb{background:#334155;border-radius:99px}
+  .board::-webkit-scrollbar-track{background:transparent}
+
+  /* Pano */
+  .panel{
+    background:linear-gradient(180deg,rgba(30,41,59,.55),rgba(15,23,42,.2));
+    border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    box-shadow:var(--shadow-lg);
+  }
+  .board{max-height:min(56vh,460px);overflow-y:auto;overscroll-behavior:contain}
+  .row{
+    display:grid;grid-template-columns:1.7fr 1fr 1.1fr .7fr .7fr;gap:7px;
+    padding:8px 12px;position:relative;
+  }
+  .row + .row::before{content:"";position:absolute;top:0;left:12px;right:12px;height:1px;background:rgba(51,65,85,.45)}
+  .head-row{
+    position:sticky;top:0;z-index:5;padding-top:11px;padding-bottom:9px;
+    background:rgba(17,25,40,.93);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  }
+  .head-row::before{display:none}
+  .head-row > div{
+    text-align:center;font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted-2);
+  }
+  .cell{
+    border-radius:9px;padding:9px 6px;min-height:52px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;line-height:1.25;
+    font-size:clamp(10.5px,2.55vw,13px);font-weight:550;word-break:break-word;overflow-wrap:anywhere;
+    border:1px solid transparent;background:var(--card-bg);color:var(--text-color);
+  }
+  .cell.name{justify-content:flex-start;text-align:left;align-items:flex-start;font-weight:650;padding-left:11px;
+    background:linear-gradient(180deg,rgba(30,41,59,.95),rgba(30,41,59,.65));border-color:var(--line)}
+  .cell .big{font-size:1.12em;font-weight:700;letter-spacing:-.01em}
+
+  .cell.ok{
+    background:linear-gradient(180deg,#33c29c,#239573);border-color:#29AB87;color:#fff;
+    box-shadow:0 6px 18px -10px rgba(41,171,135,.9), inset 0 1px 0 rgba(255,255,255,.18);
+  }
+  .cell.no{
+    background:linear-gradient(180deg,#ff6b71,#e04a51);border-color:var(--wrong);color:#fff;
+    box-shadow:0 6px 18px -12px rgba(253,92,99,.7), inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .cell.near{
+    background:linear-gradient(180deg,#f7b23c,#dd8f13);border-color:var(--near);color:#251a03;
+    box-shadow:0 6px 18px -12px rgba(245,165,36,.8), inset 0 1px 0 rgba(255,255,255,.28);
+  }
+
+  /* Kart açılış animasyonu */
+  .row.fresh .cell{animation:flipIn .52s cubic-bezier(.2,.8,.3,1) backwards}
+  .row.fresh .cell:nth-child(1){animation-delay:.04s}
+  .row.fresh .cell:nth-child(2){animation-delay:.13s}
+  .row.fresh .cell:nth-child(3){animation-delay:.22s}
+  .row.fresh .cell:nth-child(4){animation-delay:.31s}
+  .row.fresh .cell:nth-child(5){animation-delay:.40s}
+  @keyframes flipIn{
+    from{opacity:0;transform:perspective(700px) rotateX(-88deg) translateY(-6px)}
+    to{opacity:1;transform:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .row.fresh .cell,.ac-item,.autocomplete-items.open{animation:none!important}
+  }
+
+  .empty{padding:38px 20px 44px;text-align:center;color:var(--muted)}
+  .empty .ball{font-size:34px;display:block;margin-bottom:12px;filter:grayscale(.25);opacity:.9}
+  .empty b{display:block;font-size:15px;font-weight:600;color:var(--text-color);margin-bottom:6px}
+  .empty span{font-size:13px;line-height:1.55;display:block;max-width:330px;margin:0 auto}
+
+  .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 16px;padding:11px 14px;
+    border-top:1px solid var(--line);background:rgba(15,23,42,.5);font-size:11.5px;color:var(--muted-2)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .lg-ok{background:var(--correct)}.lg-no{background:var(--wrong)}.lg-near{background:var(--near)}
+
+  footer{margin-top:4px;text-align:center;font-size:11.5px;color:#5b6779;line-height:1.7}
+  footer button{border:0;background:none;color:var(--muted);cursor:pointer;font:inherit;text-decoration:underline;
+    text-decoration-color:rgba(148,163,184,.4);text-underline-offset:3px}
+  footer button:hover{color:var(--brand)}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:20px;
+    background:rgba(5,10,20,.72);backdrop-filter:blur(7px)}
+  .modal.open{display:grid;animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .modal-card{
+    width:100%;max-width:430px;max-height:88vh;overflow-y:auto;padding:24px;
+    background:#1b2536;
+    border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow-lg);
+    animation:rise .26s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+  .modal-card h2{font-size:20px;font-weight:750;letter-spacing:-.02em}
+  .modal-card h3{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted-2);margin:20px 0 9px;font-weight:700}
+  .modal-card p{font-size:14px;color:var(--muted);line-height:1.62}
+  .close-x{width:32px;height:32px;flex:none;border-radius:99px;border:1px solid var(--line);background:transparent;
+    color:var(--muted);cursor:pointer;font-size:20px;line-height:1;display:grid;place-items:center;transition:.15s}
+  .close-x:hover{color:#fff;border-color:var(--wrong);background:rgba(253,92,99,.14)}
+
+  .demo-row{display:grid;grid-template-columns:1.7fr 1fr 1.1fr .7fr .7fr;gap:6px;margin:10px 0}
+  .demo-row .cell{min-height:44px;font-size:11px}
+  .note{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.55;margin-top:9px}
+  .note i{flex:none;width:9px;height:9px;border-radius:3px;margin-top:5px}
+
+  .win-emoji{font-size:46px;text-align:center;display:block;margin-bottom:6px;animation:bounce .7s cubic-bezier(.2,.8,.3,1)}
+  @keyframes bounce{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
+  .win-sub{text-align:center;color:var(--muted);font-size:14px;margin-top:6px}
+  .win-name{text-align:center;font-size:25px;font-weight:800;letter-spacing:-.02em;margin:8px 0 2px;
+    background:linear-gradient(92deg,#e0f2fe,#38bdf8 60%,#7dd3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stars{text-align:center;font-size:19px;letter-spacing:3px;margin:10px 0 2px;color:var(--near)}
+  .stats-line{display:flex;gap:8px;margin:18px 0 4px}
+  .stat{flex:1;text-align:center;padding:11px 6px;border-radius:12px;background:rgba(15,23,42,.65);border:1px solid var(--line)}
+  .stat b{display:block;font-size:21px;font-weight:750;font-variant-numeric:tabular-nums}
+  .stat span{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em}
+  .modal-actions{display:flex;gap:9px;margin-top:18px}
+  .modal-actions .btn{flex:1}
+  .btn.ghost{background:rgba(15,23,42,.7);border:1px solid var(--line);box-shadow:none;color:var(--muted)}
+  .btn.ghost:hover{color:#fff;border-color:var(--muted-2);filter:none}
+
+  /* Konfeti */
+  .confetti{position:fixed;top:-14px;width:9px;height:14px;z-index:130;pointer-events:none;border-radius:2px;opacity:.95}
+  @keyframes fall{to{transform:translate3d(var(--x),108vh,0) rotate(var(--r))}}
+
+  /* Bildirim */
+  .toast{
+    position:fixed;left:50%;bottom:28px;z-index:140;transform:translate(-50%,16px);
+    background:#e2e8f0;color:#0f172a;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:11px;
+    box-shadow:0 16px 34px -12px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.25s;max-width:88vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:560px){
+    .row{grid-template-columns:1.5fr .9fr 1fr .62fr .62fr;gap:5px;padding:7px 9px}
+    .demo-row{grid-template-columns:1.5fr .9fr 1fr .62fr .62fr}
+    .cell{min-height:48px;padding:8px 4px}
+    .board{max-height:52vh}
+    .btn{padding:11px 14px}
+    .subtitle{font-size:12.5px}
+  }
+  @media (max-width:400px){
+    .head-row > div{font-size:8.5px;letter-spacing:.06em}
+    .actions{gap:6px}
+    .logo{width:40px;height:40px;border-radius:13px}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9.2"></circle>
+        <path d="M12 7.4l3.1 2.3-1.2 3.6h-3.8L8.9 9.7z"></path>
+        <path d="M12 2.8v4.6M4 9.6l4.9.1M20 9.6l-4.9.1M6.9 20.2l3.2-6.9M17.1 20.2l-3.2-6.9"></path>
+      </svg>
+    </div>
+    <div class="titles">
+      <h1>Fundleᵀᴿ</h1>
+      <p class="subtitle">Futbolcuyu tahmin et!</p>
+    </div>
+    <div class="actions">
+      <button class="icon-btn" id="helpBtn" title="Nasıl oynanır?" aria-label="Nasıl oynanır?">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9.2"></circle><path d="M9.6 9.3a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle>
+        </svg>
+      </button>
+      <button class="icon-btn" id="newBtn" title="Yeni oyun" aria-label="Yeni oyun">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.4 12a8.4 8.4 0 1 1-2.6-6.1"></path><path d="M20.6 4.4v5h-5"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span class="pill"><span class="dot"></span>Deneme: <b id="guessCount">0</b></span>
+    <span class="pill"><b id="poolCount">0</b> futbolcu</span>
+    <span class="pill">🔥 Seri: <b id="streak">0</b></span>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box" id="searchBox">
+      <span class="s-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M16.5 16.5L21 21"></path></svg>
+      </span>
+      <input type="text" id="player-input" placeholder="Futbolcu adı yaz (örn. Arda Güler)…" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Futbolcu ara">
+      <button class="btn" id="guessBtn" disabled>Tahmin Et</button>
+    </div>
+    <div id="autocomplete-list" class="autocomplete-items"></div>
+  </div>
+
+  <div class="panel">
+    <div class="board" id="board">
+      <div class="row head-row">
+        <div>Oyuncu</div><div>Uyruk</div><div>Lig</div><div>Mevki</div><div>Yaş</div>
+      </div>
+      <div id="guesses-container"></div>
+      <div class="empty" id="empty">
+        <span class="ball">⚽</span>
+        <b>Gizli futbolcuyu bul</b>
+        <span>Yukarıya bir futbolcu adı yaz ve tahmin et. Her tahminde uyruk, lig, mevki ve yaş bilgileri renklerle ipucu verir.</span>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="lg-ok"></i>doğru</span>
+      <span><i class="lg-no"></i>yanlış</span>
+      <span><i class="lg-near"></i>yaş ±2 yakın</span>
+      <span>⬆️ daha yaşlı / ⬇️ daha genç</span>
+    </div>
+  </div>
+
+  <footer>
+    <button id="helpBtn2">Nasıl oynanır?</button> · İlerlemen bu tarayıcıda otomatik kaydedilir
+  </footer>
+</div>
+
+<!-- Nasıl oynanır -->
+<div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="helpTitle">Nasıl oynanır?</h2>
+      <button class="close-x" data-close="helpModal" aria-label="Kapat">×</button>
+    </div>
+    <p>Gizli bir futbolcu seçilir. İstediğin kadar futbolcu tahmin ederek onu bulmaya çalış. Her tahminin ardından 5 kutu renk alır.</p>
+
+    <h3>Örnek</h3>
+    <div class="demo-row">
+      <div class="cell name">Arda Güler</div>
+      <div class="cell ok">Türk</div>
+      <div class="cell no">La Liga</div>
+      <div class="cell ok">OS</div>
+      <div class="cell near"><span class="big">21 ⬆️</span></div>
+    </div>
+    <div class="note"><i class="lg-ok"></i><span><b>Yeşil:</b> bu bilgi gizli futbolcuyla birebir aynı.</span></div>
+    <div class="note"><i class="lg-no"></i><span><b>Kırmızı:</b> bu bilgi farklı.</span></div>
+    <div class="note"><i class="lg-near"></i><span><b>Sarı:</b> yaş hedefe ±2 yıl kadar yakın. Ok, gizli futbolcunun daha yaşlı (⬆️) mı daha genç (⬇️) mi olduğunu söyler.</span></div>
+    <div class="modal-actions">
+      <button class="btn" data-close="helpModal">Anladım, oynuyorum</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kazanma -->
+<div class="modal" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <div class="modal-card" style="position:relative">
+    <button class="close-x" data-close="winModal" aria-label="Kapat" style="position:absolute;top:16px;right:16px">×</button>
+    <span class="win-emoji">🏆</span>
+    <h2 id="winTitle" class="win-name" style="margin-top:0">—</h2>
+    <p class="win-sub" id="winSub">Tebrikler, doğru tahmin!</p>
+    <div class="stars" id="winStars"></div>
+    <div class="stats-line">
+      <div class="stat"><b id="stGames">0</b><span>Oyun</span></div>
+      <div class="stat"><b id="stWins">0</b><span>Zafer</span></div>
+      <div class="stat"><b id="stStreak">0</b><span>Seri</span></div>
+      <div class="stat"><b id="stBest">0</b><span>Rekor</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="winNew">Yeni oyun</button>
+      <button class="btn ghost" data-close="winModal">Tahtayı gör</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  /* ==================== Oyuncu Veritabanı ==================== */
+  const PLAYERS_RAW = [
+    // Galatasaray
+    { name: 'Uğurcan Çakır', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 30 },
+    { name: 'Günay Güvenç', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 35 },
+    { name: 'Jankat Yılmaz', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 22 },
+    { name: 'Enes Emre Büyük', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 20 },
+    { name: 'Davinson Sánchez', country: 'Kolombiyalı', league: 'Süper Lig', pos: 'Def', age: 30 },
+    { name: 'El Chadaille Bitshiabu', country: 'Fransız', league: 'Süper Lig', pos: 'Def', age: 21 },
+    { name: 'Wilfried Singo', country: 'Fildişi Sahilli', league: 'Süper Lig', pos: 'Def', age: 25 },
+    { name: 'Ismail Jakobs', country: 'Senegalli', league: 'Süper Lig', pos: 'Def', age: 27 },
+    { name: 'Eren Elmalı', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 26 },
+    { name: 'Abdülkerim Bardakcı', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 32 },
+    { name: 'Kazımcan Karataş', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 23 },
+    { name: 'Metehan Baltacı', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 23 },
+    { name: 'Arda Ünyay', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 19 },
+    { name: 'Lucas Torreira', country: 'Uruguaylı', league: 'Süper Lig', pos: 'OS', age: 30 },
+    { name: 'Gabriel Sara', country: 'Brezilyalı', league: 'Süper Lig', pos: 'OS', age: 27 },
+    { name: 'İlkay Gündoğan', country: 'Alman', league: 'Süper Lig', pos: 'OS', age: 35 },
+    { name: 'Mario Lemina', country: 'Gabonlu', league: 'Süper Lig', pos: 'OS', age: 33 },
+    { name: 'Lesley Ugochukwu', country: 'Fransız', league: 'Süper Lig', pos: 'OS', age: 22 },
+    { name: 'Aleksey Batrakov', country: 'Rus', league: 'Süper Lig', pos: 'OS', age: 21 },
+    { name: 'Kaan Ayhan', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 31 },
+    { name: 'Eyüp Aydın', country: 'Alman', league: 'Süper Lig', pos: 'OS', age: 22 },
+    { name: 'Renato Nhaga', country: 'Gine-Bissaulu', league: 'Süper Lig', pos: 'OS', age: 19 },
+    { name: 'Victor Osimhen', country: 'Nijeryalı', league: 'Süper Lig', pos: 'For', age: 27 },
+    { name: 'Leroy Sané', country: 'Alman', league: 'Süper Lig', pos: 'For', age: 30 },
+    { name: 'Barış Alper Yılmaz', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 26 },
+    { name: 'Yunus Akgün', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 26 },
+    { name: 'Roland Sallai', country: 'Macar', league: 'Süper Lig', pos: 'For', age: 29 },
+    { name: 'Deniz Gül', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 22 },
+    { name: 'Halil Dervişoğlu', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 26 },
+
+    // Fenerbahçe
+    { name: 'Ederson', country: 'Brezilyalı', league: 'Süper Lig', pos: 'KL', age: 33 },
+    { name: 'Mert Günok', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 37 },
+    { name: 'Tarık Çetin', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 29 },
+    { name: 'Nathan Aké', country: 'Hollandalı', league: 'Süper Lig', pos: 'Def', age: 31 },
+    { name: 'Milan Škriniar', country: 'Slovak', league: 'Süper Lig', pos: 'Def', age: 31 },
+    { name: 'Archie Brown', country: 'İngiliz', league: 'Süper Lig', pos: 'Def', age: 24 },
+    { name: 'Nélson Semedo', country: 'Portekizli', league: 'Süper Lig', pos: 'Def', age: 32 },
+    { name: 'Jayden Oosterwolde', country: 'Hollandalı', league: 'Süper Lig', pos: 'Def', age: 25 },
+    { name: 'Mert Müldür', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 27 },
+    { name: 'Rodrigo Becão', country: 'Brezilyalı', league: 'Süper Lig', pos: 'Def', age: 30 },
+    { name: 'Ognjen Mimović', country: 'Sırp', league: 'Süper Lig', pos: 'Def', age: 22 },
+    { name: 'Kojo Peprah Oppong', country: 'Ganalı', league: 'Süper Lig', pos: 'Def', age: 22 },
+    { name: 'Yiğit Efe Demir', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 22 },
+    { name: 'Mattéo Guendouzi', country: 'Fransız', league: 'Süper Lig', pos: 'OS', age: 27 },
+    { name: "N'Golo Kanté", country: 'Fransız', league: 'Süper Lig', pos: 'OS', age: 35 },
+    { name: 'Marco Asensio', country: 'İspanyol', league: 'Süper Lig', pos: 'OS', age: 30 },
+    { name: 'İsmail Yüksek', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 27 },
+    { name: 'Levent Mercan', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 25 },
+    { name: 'Bartuğ Elmaz', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 23 },
+    { name: 'Mert Hakan Yandaş', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 32 },
+    { name: 'Mason Greenwood', country: 'İngiliz', league: 'Süper Lig', pos: 'For', age: 25 },
+    { name: 'Kerem Aktürkoğlu', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 27 },
+    { name: 'Romelu Lukaku', country: 'Belçikalı', league: 'Süper Lig', pos: 'For', age: 33 },
+    { name: 'Vedat Muriqi', country: 'Kosovalı', league: 'Süper Lig', pos: 'For', age: 32 },
+    { name: 'Dorgeles Nene', country: 'Malili', league: 'Süper Lig', pos: 'For', age: 23 },
+    { name: 'Oğuz Aydın', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 25 },
+    { name: 'İrfan Can Kahveci', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 31 },
+    { name: 'Anthony Musaba', country: 'Hollandalı', league: 'Süper Lig', pos: 'For', age: 25 },
+    { name: 'Amara Diouf', country: 'Senegalli', league: 'Süper Lig', pos: 'For', age: 18 },
+
+    // Beşiktaş
+    { name: 'Alexander Nübel', country: 'Alman', league: 'Süper Lig', pos: 'KL', age: 30 },
+    { name: 'Doğan Alemdar', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 23 },
+    { name: 'Emir Yaşar', country: 'Türk', league: 'Süper Lig', pos: 'KL', age: 20 },
+    { name: 'Emmanuel Agbadou', country: 'Fildişi Sahilli', league: 'Süper Lig', pos: 'Def', age: 29 },
+    { name: 'Tiago Djaló', country: 'Portekizli', league: 'Süper Lig', pos: 'Def', age: 26 },
+    { name: 'Emirhan Topçu', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 25 },
+    { name: 'Ümit Akdağ', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 23 },
+    { name: 'Yasin Özcan', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 20 },
+    { name: 'Kassoum Ouattara', country: 'Fransız', league: 'Süper Lig', pos: 'Def', age: 21 },
+    { name: 'Rıdvan Yılmaz', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 25 },
+    { name: 'Michael Murillo', country: 'Panamalı', league: 'Süper Lig', pos: 'Def', age: 30 },
+    { name: 'Taylan Bulut', country: 'Alman', league: 'Süper Lig', pos: 'Def', age: 20 },
+    { name: 'Mustafa Azem Yortaç', country: 'Türk', league: 'Süper Lig', pos: 'Def', age: 18 },
+    { name: 'Wilfred Ndidi', country: 'Nijeryalı', league: 'Süper Lig', pos: 'OS', age: 29 },
+    { name: 'Salih Özcan', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 28 },
+    { name: 'Kartal Kayra Yılmaz', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 25 },
+    { name: 'Orkun Kökçü', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 25 },
+    { name: 'Fabio Miretti', country: 'İtalyan', league: 'Süper Lig', pos: 'OS', age: 23 },
+    { name: 'Junior Olaitan', country: 'Beninli', league: 'Süper Lig', pos: 'OS', age: 24 },
+    { name: 'İlhan Fakılı', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 20 },
+    { name: 'Élan Ricardo', country: 'Kolombiyalı', league: 'Süper Lig', pos: 'OS', age: 22 },
+    { name: 'Fahri Kerem Ay', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 21 },
+    { name: 'Devrim Şahin', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 19 },
+    { name: 'Berke Özer', country: 'Türk', league: 'Ligue 1', pos: 'KL', age: 26 },
+    { name: 'Dušan Vlahović', country: 'Sırp', league: 'Süper Lig', pos: 'For', age: 26 },
+    { name: 'Oh Hyeon-gyu', country: 'Güney Koreli', league: 'Süper Lig', pos: 'For', age: 25 },
+    { name: 'Semih Kılıçsoy', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 21 },
+    { name: 'Mustafa Erhan Hekimoğlu', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 19 },
+    { name: 'Leandro Trossard', country: 'Belçikalı', league: 'Süper Lig', pos: 'For', age: 31 },
+    { name: 'Ernest Poku', country: 'Hollandalı', league: 'Süper Lig', pos: 'For', age: 22 },
+    { name: 'Václav Černý', country: 'Çek', league: 'Süper Lig', pos: 'OS', age: 28 },
+    { name: 'Milot Rashica', country: 'Kosovalı', league: 'Süper Lig', pos: 'OS', age: 30 },
+    { name: 'Can Keleş', country: 'Türk', league: 'Süper Lig', pos: 'For', age: 25 },
+    { name: 'Ozan Kabak', country: 'Türk', league: 'Bundesliga', pos: 'Def', age: 26 },
+
+    // Trabzonspor & Süper Lig
+    { name: 'Mohamed Salah', country: 'Mısırlı', league: 'Süper Lig', pos: 'For', age: 34 },
+    { name: 'André Onana', country: 'Kamerunlu', league: 'Süper Lig', pos: 'KL', age: 30 },
+    { name: 'Stefan Savić', country: 'Karadağlı', league: 'Süper Lig', pos: 'Def', age: 35 },
+    { name: 'Batista Mendy', country: 'Fransız', league: 'Süper Lig', pos: 'OS', age: 26 },
+    { name: 'Ernest Muçi', country: 'Arnavut', league: 'Süper Lig', pos: 'OS', age: 25 },
+    { name: 'Paul Onuachu', country: 'Nijeryalı', league: 'Süper Lig', pos: 'For', age: 32 },
+    { name: 'Jerome Opoku', country: 'Ganalı', league: 'Süper Lig', pos: 'Def', age: 27 },
+    { name: 'Rick van Drongelen', country: 'Hollandalı', league: 'Süper Lig', pos: 'Def', age: 27 },
+    { name: 'Olivier Ntcham', country: 'Kamerunlu', league: 'Süper Lig', pos: 'OS', age: 28 },
+    { name: 'Berkay Özcan', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 28 },
+    { name: 'Alexandru Maxim', country: 'Romanyalı', league: 'Süper Lig', pos: 'OS', age: 36 },
+    { name: 'Dal Varešanović', country: 'Boşnak', league: 'Süper Lig', pos: 'OS', age: 25 },
+    { name: 'Krzysztof Piątek', country: 'Polonyalı', league: 'Süper Lig', pos: 'For', age: 31 },
+    { name: 'Rômulo', country: 'Brezilyalı', league: 'Süper Lig', pos: 'For', age: 24 },
+    { name: 'Marius Mouandilmadji', country: 'Çadlı', league: 'Süper Lig', pos: 'For', age: 28 },
+
+    // La Liga
+    { name: 'Kylian Mbappé', country: 'Fransız', league: 'La Liga', pos: 'For', age: 27 },
+    { name: 'Vinícius Júnior', country: 'Brezilyalı', league: 'La Liga', pos: 'For', age: 26 },
+    { name: 'Jude Bellingham', country: 'İngiliz', league: 'La Liga', pos: 'OS', age: 23 },
+    { name: 'Lamine Yamal', country: 'İspanyol', league: 'La Liga', pos: 'For', age: 19 },
+    { name: 'Pedri', country: 'İspanyol', league: 'La Liga', pos: 'OS', age: 23 },
+    { name: 'Arda Güler', country: 'Türk', league: 'La Liga', pos: 'OS', age: 21 },
+    { name: 'Federico Valverde', country: 'Uruguaylı', league: 'La Liga', pos: 'OS', age: 28 },
+    { name: 'Rodrygo', country: 'Brezilyalı', league: 'La Liga', pos: 'For', age: 25 },
+    { name: 'Raphinha', country: 'Brezilyalı', league: 'La Liga', pos: 'For', age: 29 },
+    { name: 'Gavi', country: 'İspanyol', league: 'La Liga', pos: 'OS', age: 22 },
+    { name: 'Antoine Griezmann', country: 'Fransız', league: 'MLS', pos: 'For', age: 35 },
+    { name: 'Julián Álvarez', country: 'Arjantinli', league: 'La Liga', pos: 'For', age: 26 },
+    { name: 'Thibaut Courtois', country: 'Belçikalı', league: 'La Liga', pos: 'KL', age: 34 },
+    { name: 'Éder Militão', country: 'Brezilyalı', league: 'La Liga', pos: 'Def', age: 28 },
+    { name: 'Dani Carvajal', country: 'İspanyol', league: 'La Liga', pos: 'Def', age: 34 },
+    { name: 'Frenkie de Jong', country: 'Hollandalı', league: 'La Liga', pos: 'OS', age: 29 },
+    { name: 'Jules Koundé', country: 'Fransız', league: 'La Liga', pos: 'Def', age: 27 },
+    { name: 'Ronald Araújo', country: 'Uruguaylı', league: 'Premier League', pos: 'Def', age: 27 },
+    { name: 'Nico Williams', country: 'İspanyol', league: 'La Liga', pos: 'For', age: 24 },
+    { name: 'Dani Olmo', country: 'İspanyol', league: 'La Liga', pos: 'OS', age: 28 },
+    { name: 'Alexander Sørloth', country: 'Norveçli', league: 'La Liga', pos: 'For', age: 30 },
+    { name: 'Jan Oblak', country: 'Sloven', league: 'La Liga', pos: 'KL', age: 33 },
+    { name: 'Robin Le Normand', country: 'İspanyol', league: 'La Liga', pos: 'Def', age: 29 },
+    { name: 'Inaki Williams', country: 'Ganalı', league: 'La Liga', pos: 'For', age: 32 },
+    { name: 'Mikel Oyarzabal', country: 'İspanyol', league: 'La Liga', pos: 'For', age: 29 },
+
+    // Premier League
+    { name: 'Erling Haaland', country: 'Norveçli', league: 'Premier League', pos: 'For', age: 26 },
+    { name: 'Kevin De Bruyne', country: 'Belçikalı', league: 'Serie A', pos: 'OS', age: 35 },
+    { name: 'Rayan Cherki', country: 'Fransız', league: 'Premier League', pos: 'OS', age: 23 },
+    { name: 'Bukayo Saka', country: 'İngiliz', league: 'Premier League', pos: 'For', age: 25 },
+    { name: 'Phil Foden', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 26 },
+    { name: 'Rodri', country: 'İspanyol', league: 'La Liga', pos: 'OS', age: 30 },
+    { name: 'Declan Rice', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 27 },
+    { name: 'Cole Palmer', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 24 },
+    { name: 'Virgil van Dijk', country: 'Hollandalı', league: 'Premier League', pos: 'Def', age: 35 },
+    { name: 'Trent Alexander-Arnold', country: 'İngiliz', league: 'La Liga', pos: 'Def', age: 28 },
+    { name: 'Bruno Fernandes', country: 'Portekizli', league: 'Premier League', pos: 'OS', age: 32 },
+    { name: 'Son Heung-min', country: 'Güney Koreli', league: 'MLS', pos: 'For', age: 34 },
+    { name: 'William Saliba', country: 'Fransız', league: 'Premier League', pos: 'Def', age: 25 },
+    { name: 'Gabriel Martinelli', country: 'Brezilyalı', league: 'Saudi Pro League', pos: 'For', age: 25 },
+    { name: 'Kai Havertz', country: 'Alman', league: 'Premier League', pos: 'For', age: 27 },
+    { name: 'Alexis Mac Allister', country: 'Arjantinli', league: 'Premier League', pos: 'OS', age: 27 },
+    { name: 'Ollie Watkins', country: 'İngiliz', league: 'Saudi Pro League', pos: 'For', age: 30 },
+    { name: 'Alexander Isak', country: 'İsveçli', league: 'Premier League', pos: 'For', age: 27 },
+    { name: 'Bruno Guimarães', country: 'Brezilyalı', league: 'Premier League', pos: 'OS', age: 28 },
+    { name: 'David Raya', country: 'İspanyol', league: 'Premier League', pos: 'KL', age: 31 },
+    { name: 'Alisson Becker', country: 'Brezilyalı', league: 'Premier League', pos: 'KL', age: 34 },
+    { name: 'Josko Gvardiol', country: 'Hırvat', league: 'Premier League', pos: 'Def', age: 24 },
+    { name: 'Kobbie Mainoo', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 21 },
+    { name: 'Marcus Rashford', country: 'İngiliz', league: 'Premier League', pos: 'For', age: 28 },
+    { name: 'Eberechi Eze', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 28 },
+    { name: 'Viktor Gyökeres', country: 'İsveçli', league: 'Premier League', pos: 'For', age: 28 },
+    
+    // Bundesliga
+    { name: 'Harry Kane', country: 'İngiliz', league: 'Bundesliga', pos: 'For', age: 33 },
+    { name: 'Jamal Musiala', country: 'Alman', league: 'Bundesliga', pos: 'OS', age: 23 },
+    { name: 'Florian Wirtz', country: 'Alman', league: 'Premier League', pos: 'OS', age: 23 },
+    { name: 'Xavi Simons', country: 'Hollandalı', league: 'Premier League', pos: 'OS', age: 23 },
+    { name: 'Joshua Kimmich', country: 'Alman', league: 'Bundesliga', pos: 'OS', age: 31 },
+    { name: 'Michael Olise', country: 'Fransız', league: 'Bundesliga', pos: 'For', age: 24 },
+    { name: 'Serge Gnabry', country: 'Alman', league: 'Bundesliga', pos: 'For', age: 31 },
+    { name: 'Jobe Bellingham', country: 'İngiliz', league: 'Bundesliga', pos: 'OS', age: 21 },
+    { name: 'Manuel Neuer', country: 'Alman', league: 'Bundesliga', pos: 'KL', age: 40 },
+    { name: 'Dayot Upamecano', country: 'Fransız', league: 'Bundesliga', pos: 'Def', age: 27 },
+    { name: 'Alphonso Davies', country: 'Kanadalı', league: 'Bundesliga', pos: 'Def', age: 25 },
+    { name: 'Jeremie Frimpong', country: 'Hollandalı', league: 'Premier League', pos: 'Def', age: 25 },
+    { name: 'Alejandro Grimaldo', country: 'İspanyol', league: 'La Liga', pos: 'Def', age: 31 },
+    { name: 'Victor Boniface', country: 'Nijeryalı', league: 'Bundesliga', pos: 'For', age: 25 },
+    { name: 'Granit Xhaka', country: 'İsviçreli', league: 'Premier League', pos: 'OS', age: 34 },
+    { name: 'Jonathan Tah', country: 'Alman', league: 'Bundesliga', pos: 'Def', age: 30 },
+    { name: 'Gregor Kobel', country: 'İsviçreli', league: 'Bundesliga', pos: 'KL', age: 28 },
+    { name: 'Nico Schlotterbeck', country: 'Alman', league: 'Bundesliga', pos: 'Def', age: 26 },
+    { name: 'Julian Brandt', country: 'Alman', league: 'Eredivisie', pos: 'OS', age: 30 },
+    { name: 'Serhou Guirassy', country: 'Gineli', league: 'Bundesliga', pos: 'For', age: 30 },
+    { name: 'Lois Openda', country: 'Belçikalı', league: 'Ligue 1', pos: 'For', age: 26 },
+    { name: 'Benjamin Sesko', country: 'Sloven', league: 'Premier League', pos: 'For', age: 23 },
+    { name: 'Deniz Undav', country: 'Alman', league: 'Bundesliga', pos: 'For', age: 30 },
+    { name: 'Kim Min-jae', country: 'Güney Koreli', league: 'Bundesliga', pos: 'Def', age: 29 },
+    { name: 'Aleksandar Pavlovic', country: 'Alman', league: 'Bundesliga', pos: 'OS', age: 22 },
+
+    // Serie A
+    { name: "Mike Maignan", country: "Fransız", league: "Serie A", pos: "KL", age: 31 },
+    { name: "Alex Meret", country: "İtalyan", league: "Serie A", pos: "KL", age: 29 },
+    { name: "Marco Carnesecchi", country: "İtalyan", league: "Serie A", pos: "KL", age: 26 },
+    { name: "Josep Martínez", country: "İspanyol", league: "Serie A", pos: "KL", age: 28 },
+    { name: "Alessandro Bastoni", country: "İtalyan", league: "Serie A", pos: "Def", age: 27 },
+    { name: "Gleison Bremer", country: "Brezilyalı", league: "Serie A", pos: "Def", age: 29 },
+    { name: "Benjamin Pavard", country: "Fransız", league: "Serie A", pos: "Def", age: 30 },
+    { name: "Theo Hernández", country: "Fransız", league: "Saudi Pro League", pos: "Def", age: 29 },
+    { name: "Giorgio Scalvini", country: "İtalyan", league: "Serie A", pos: "Def", age: 22 },
+    { name: "Federico Dimarco", country: "İtalyan", league: "Serie A", pos: "Def", age: 28 },
+    { name: "Nicolò Barella", country: "İtalyan", league: "Serie A", pos: "OS", age: 29 },
+    { name: "Hakan Çalhanoğlu", country: "Türk", league: "Serie A", pos: "OS", age: 32 },
+    { name: "Teun Koopmeiners", country: "Hollandalı", league: "Serie A", pos: "OS", age: 28 },
+    { name: "Curtis Jones", country: "İngiliz", league: "Serie A", pos: "OS", age: 25 },
+    { name: "Tijjani Reijnders", country: "Hollandalı", league: "Saudi Pro League", pos: "OS", age: 28 },
+    { name: "Éderson", country: "Brezilyalı", league: "Serie A", pos: "OS", age: 27 },
+    { name: "Piotr Zieliński", country: "Polonyalı", league: "Serie A", pos: "OS", age: 32 },
+    { name: "Lautaro Martínez", country: "Arjantinli", league: "Serie A", pos: "For", age: 29 },
+    { name: "Marcus Thuram", country: "Fransız", league: "Serie A", pos: "For", age: 29 },
+    { name: "Gonçalo Ramos", country: "Portekizli", league: "Serie A", pos: "For", age: 25 },
+    { name: "Rasmus Højlund", country: "Danimarkalı", league: "Serie A", pos: "For", age: 23 },
+    { name: "Loïs Openda", country: "Belçikalı", league: "Ligue 1", pos: "For", age: 26 },
+    { name: "Randal Kolo Muani", country: "Fransız", league: "Serie A", pos: "For", age: 27 },
+    { name: "Kenan Yıldız", country: "Türk", league: "Serie A", pos: "For", age: 21 },
+    { name: "Artem Dovbyk", country: "Ukraynalı", league: "Serie A", pos: "For", age: 29 },
+
+    // Ligue 1
+    { name: "Matvey Safonov", country: "Rus", league: "Ligue 1", pos: "KL", age: 27 },
+    { name: "Robin Risser", country: "Fransız", league: "Ligue 1", pos: "KL", age: 21 },
+    { name: "Lucas Chevalier", country: "Fransız", league: "Ligue 1", pos: "KL", age: 24 },
+    { name: "Philipp Köhn", country: "İsviçreli", league: "Ligue 1", pos: "KL", age: 28 },
+    { name: "Nuno Mendes", country: "Portekizli", league: "Ligue 1", pos: "Def", age: 24 },
+    { name: "Willian Pacho", country: "Ekvadorlu", league: "Ligue 1", pos: "Def", age: 24 },
+    { name: "Achraf Hakimi", country: "Faslı", league: "Ligue 1", pos: "Def", age: 27 },
+    { name: "Ilya Zabarnyi", country: "Ukraynalı", league: "Ligue 1", pos: "Def", age: 24 },
+    { name: "Ismaëlo Ganiou", country: "Fransız", league: "Ligue 1", pos: "Def", age: 21 },
+    { name: "João Neves", country: "Portekizli", league: "Ligue 1", pos: "OS", age: 22 },
+    { name: "Vitinha", country: "Portekizli", league: "Ligue 1", pos: "OS", age: 26 },
+    { name: "Warren Zaïre-Emery", country: "Fransız", league: "Ligue 1", pos: "OS", age: 20 },
+    { name: "Lamine Camara", country: "Senegalli", league: "Ligue 1", pos: "OS", age: 22 },
+    { name: "Maghnes Akliouche", country: "Fransız", league: "Ligue 1", pos: "OS", age: 24 },
+    { name: "Senny Mayulu", country: "Fransız", league: "Ligue 1", pos: "OS", age: 20 },
+    { name: "Tyler Morton", country: "İngiliz", league: "Ligue 1", pos: "OS", age: 23 },
+    { name: "Hákon Arnar Haraldsson", country: "İzlandalı", league: "Ligue 1", pos: "OS", age: 23 },
+    { name: "Désiré Doué", country: "Fransız", league: "Ligue 1", pos: "For", age: 21 },
+    { name: "Khvicha Kvaratskhelia", country: "Gürcü", league: "Ligue 1", pos: "For", age: 25 },
+    { name: "Ousmane Dembélé", country: "Fransız", league: "Ligue 1", pos: "For", age: 29 },
+    { name: "Bradley Barcola", country: "Fransız", league: "Premier League", pos: "For", age: 24 },
+    { name: "Ferran Torres", country: "İspanyol", league: "Ligue 1", pos: "For", age: 26 },
+    { name: "Folarin Balogun", country: "Amerikalı", league: "Ligue 1", pos: "For", age: 25 },
+    { name: "Estéban Lepaul", country: "Fransız", league: "Ligue 1", pos: "For", age: 26 },
+    { name: "Mika Godts", country: "Belçikalı", league: "Ligue 1", pos: "For", age: 21 },
+
+    // Diğer Ligler
+    { name: 'Rodrigo Mora', country: 'Portekizli', league: 'Liga Portugal', pos: 'OS', age: 19 },
+    { name: 'Francisco Trincão', country: 'Portekizli', league: 'Saudi Pro League', pos: 'For', age: 26 },
+    { name: 'Gonçalo Inácio', country: 'Portekizli', league: 'Liga Portugal', pos: 'Def', age: 25 },
+    { name: 'Ousmane Diomande', country: 'Fildişi Sahilli', league: 'Premier League', pos: 'Def', age: 22 },
+    { name: 'Morten Hjulmand', country: 'Danimarkalı', league: 'La Liga', pos: 'OS', age: 27 },
+    { name: 'Pedro Gonçalves', country: 'Portekizli', league: 'Liga Portugal', pos: 'OS', age: 28 },
+    { name: 'Geovany Quenda', country: 'Portekizli', league: 'Premier League', pos: 'For', age: 19 },
+    { name: 'Brian Brobbey', country: 'Hollandalı', league: 'Premier League', pos: 'For', age: 24 },
+    { name: 'Kenneth Taylor', country: 'Hollandalı', league: 'Premier League', pos: 'OS', age: 24 },
+    { name: 'Jorrel Hato', country: 'Hollandalı', league: 'Premier League', pos: 'Def', age: 20 },
+    { name: 'Jordan Henderson', country: 'İngiliz', league: 'Eredivisie', pos: 'OS', age: 36 },
+    { name: 'Steven Berghuis', country: 'Hollandalı', league: 'Premier League', pos: 'OS', age: 34 },
+    { name: 'Wout Weghorst', country: 'Hollandalı', league: 'Eredivisie', pos: 'For', age: 34 },
+    { name: 'Devyne Rensch', country: 'Hollandalı', league: 'Serie A', pos: 'Def', age: 23 },
+    { name: 'Luuk de Jong', country: 'Hollandalı', league: 'Liga Portugal', pos: 'For', age: 36 },
+    { name: 'Noa Lang', country: 'Hollandalı', league: 'Serie A', pos: 'For', age: 27 },
+    { name: 'Johan Bakayoko', country: 'Belçikalı', league: 'Bundesliga', pos: 'For', age: 23 },
+    { name: 'Joey Veerman', country: 'Hollandalı', league: 'Bundesliga', pos: 'OS', age: 27 },
+    { name: 'Sem Steijn', country: 'Hollandalı', league: 'Eredivisie', pos: 'OS', age: 24 },
+    { name: 'Troy Parrott', country: 'İrlandalı', league: 'La Liga', pos: 'For', age: 24 },
+    { name: 'Cristiano Ronaldo', country: 'Portekizli', league: 'Saudi Pro League', pos: 'For', age: 41 },
+    { name: 'Karim Benzema', country: 'Fransız', league: 'Saudi Pro League', pos: 'For', age: 38 },
+    { name: 'Lionel Messi', country: 'Arjantinli', league: 'MLS', pos: 'For', age: 39 },
+    { name: 'Luis Suarez', country: 'Uruguaylı', league: 'MLS', pos: 'For', age: 39 },
+    { name: 'Sergio Busquets', country: 'İspanyol', league: 'MLS', pos: 'OS', age: 38 },
+    { name: 'Memphis Depay', country: 'Hollandalı', league: 'Série A (Brezilya)', pos: 'For', age: 32 },
+    { name: 'Estevao Willian', country: 'Brezilyalı', league: 'Premier League', pos: 'For', age: 19 },
+    { name: 'Thiago Silva', country: 'Brezilyalı', league: 'Série A (Brezilya)', pos: 'Def', age: 42 },
+    { name: 'Philippe Coutinho', country: 'Brezilyalı', league: 'Série A (Brezilya)', pos: 'OS', age: 34 },
+    { name: 'Darwin Nunez', country: 'Uruguaylı', league: 'Saudi Pro League', pos: 'For', age: 27 },
+    { name: 'Ruben Neves', country: 'Portekizli', league: 'Saudi Pro League', pos: 'OS', age: 29 },
+    { name: 'Gustavo Puerta', country: 'Kolombiyalı', league: 'Super League', pos: 'OS', age: 23 },
+    { name: 'Diego Costa', country: 'Brezilyalı', league: 'Super League', pos: 'Def', age: 27 },
+    { name: 'Sergi Dominguez', country: 'İspanyol', league: 'Croatia League', pos: 'Def', age: 21 },
+    { name: 'Patrick Berg', country: 'Norveçli', league: 'Eliteserien', pos: 'OS', age: 28 },
+    { name: 'Luis Diaz', country: 'Kolombiyalı', league: 'Bundesliga', pos: 'OS', age: 29 },
+    { name: 'Lennart Karl', country: 'Alman', league: 'Bundesliga', pos: 'OS', age: 18 },
+    { name: 'Nico Schlotterbeck', country: 'Alman', league: 'Bundesliga', pos: 'Def', age: 26 },
+    { name: 'Can Uzun', country: 'Türk', league: 'Bundesliga', pos: 'OS', age: 20 },
+    { name: 'Nico Paz', country: 'Arjantinli', league: 'Serie A', pos: 'OS', age: 22 },
+    { name: 'Rasmus Hojlund', country: 'Danimarkalı', league: 'Serie A', pos: 'For', age: 23 },
+    { name: 'Federico Dimarco', country: 'İtalyan', league: 'Serie A', pos: 'Def', age: 28 },
+    { name: 'Manu Kone', country: 'Fransız', league: 'Serie A', pos: 'OS', age: 25 },
+    { name: 'Gianluigi Donnarumma', country: 'İtalyan', league: 'Premier League', pos: 'KL', age: 27 },
+    { name: 'Nicolo Tresoldi', country: 'Alman', league: 'Jupiler League', pos: 'For', age: 22 },
+    { name: 'Joel Ordonez', country: 'Ekvadorlu', league: 'Jupiler League', pos: 'Def', age: 22 },
+    { name: 'Yann Sommer', country: 'İsviçreli', league: 'Jupiler League', pos: 'KL', age: 37 },
+    { name: 'Joaquin Seys', country: 'Belçikalı', league: 'Jupiler League', pos: 'Def', age: 21 },
+    { name: 'Carlos Forbs', country: 'Portekizli', league: 'Jupiler League', pos: 'OS', age: 22 },
+    { name: 'Ferdi Kadıoğlu', country: 'Türk', league: 'Premier League', pos: 'Def', age: 27 },
+    { name: 'Aral Şimşir', country: 'Türk', league: 'Süper Lig', pos: 'OS', age: 22 },
+    { name: 'Zeki Çelik', country: 'Türk', league: 'Serie A', pos: 'Def', age: 29 },
+    { name: 'Giorgi Mamardashvili', country: 'Gürcü', league: 'Premier League', pos: 'KL', age: 26 },
+    { name: 'Elliot Anderson', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 23 },
+    { name: 'Morgan Rogers', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 24 },
+    { name: 'Enzo Fernandez', country: 'Arjantinli', league: 'Premier League', pos: 'OS', age: 25 },
+    { name: 'Dominik Szoboszlai', country: 'Macar', league: 'Premier League', pos: 'OS', age: 25 },
+    { name: 'Moises Caicedo', country: 'Ekvadorlu', league: 'Premier League', pos: 'OS', age: 24 },
+    { name: 'João Pedro', country: 'Brezilyalı', league: 'Premier League', pos: 'For', age: 25 },
+    { name: 'Martin Odegaard', country: 'Norveçli', league: 'Premier League', pos: 'OS', age: 27 },
+    { name: 'Morgan Gibbs-White', country: 'İngiliz', league: 'Premier League', pos: 'OS', age: 26 },
+    { name: 'Yan Diomande', country: 'İrlandalı', league: 'La Liga', pos: 'OS', age: 19 },
+    { name: 'Julian Alvarez', country: 'Arjantinli', league: 'La Liga', pos: 'For', age: 26 },
+    { name: 'Anhony Gordon', country: 'İngiliz', league: 'La Liga', pos: 'For', age: 25 },
+    { name: 'Dean Huijsen', country: 'İspanyol', league: 'La Liga', pos: 'Def', age: 21 },
+    { name: 'Pau Cubarsí', country: 'İspanyol', league: 'La Liga', pos: 'Def', age: 19 },
+    { name: 'Mark Guéhi', country: 'İngiliz', league: 'Premier League', pos: 'Def', age: 26 },
+    { name: 'Abdukodir Khusanov', country: 'Özbek', league: 'Premier League', pos: 'Def', age: 22 },
+    { name: 'Yan Bisseck', country: 'Alman', league: 'Serie A', pos: 'Def', age: 25 },
+    { name: 'Rafael Leão', country: 'Portekizli', league: 'Süper Lig', pos: 'For', age: 27 },
+    { name: 'Hugo Ekitiké', country: 'Fransız', league: 'Premier League', pos: 'For', age: 24 },
+    { name: 'Fermin López', country: 'İspanyol', league: 'La Liga', pos: 'OS', age: 23 },
+  ];
+
+  /* ---------- Yardımcılar ---------- */
+  const TR_MAP = {'i':'İ','ı':'I','ş':'Ş','ğ':'Ğ','ü':'Ü','ö':'Ö','ç':'Ç'};
+  const trUpper = s => s.split('').map(c => TR_MAP[c] || c).join('').toLocaleUpperCase('tr-TR');
+  const norm = s => String(s || '').toLocaleLowerCase('tr-TR').trim()
+    .replace(/[âàáäãå]/g,'a').replace(/ı/g,'i').replace(/[îïí]/g,'i')
+    .replace(/[ôòóöõ]/g,'o').replace(/[ûùúü]/g,'u').replace(/[éèêë]/g,'e')
+    .replace(/[ñ]/g,'n').replace(/[çć]/g,'c').replace(/[şš]/g,'s').replace(/[ğ]/g,'g')
+    .replace(/[ý]/g,'y').replace(/[źž]/g,'z')
+    .replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,' ').trim();
+
+  const $ = s => document.querySelector(s);
+  const input = $('#player-input');
+  const acList = $('#autocomplete-list');
+  const guessesContainer = $('#guesses-container');
+  const board = $('#board');
+  const searchBox = $('#searchBox');
+
+  /* Veritabanını temizle */
+  const DB = (() => {
+    const seen = new Set(), out = [];
+    for (const p of PLAYERS_RAW) {
+      if (!p || !p.name) continue;
+      const rec = {
+        name: String(p.name).trim(),
+        country: String(p.country).trim(),
+        league: String(p.league).trim(),
+        pos: trUpper(String(p.pos).trim().replace('FOR','For')).replace(/^For$/,'For'),
+        age: Number(p.age)
+      };
+      const key = [norm(rec.name), norm(rec.country), norm(rec.league), rec.pos, rec.age].join('|');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(rec);
+    }
+    return out;
+  })();
+
+  const POS_LONG = { 'KL':'Kaleci', 'DEF':'Defans', 'OS':'Orta Saha', 'FOR':'Forvet' };
+  const posLong = p => POS_LONG[trUpper(p)] || p;
+
+  /* ---------- Durum / kayıt ---------- */
+  const G_KEY = 'fundle.game.v1';
+  const S_KEY = 'fundle.stats.v1';
+  let game = null;
+  let stats = load(S_KEY, { games:0, wins:0, streak:0, best:0 });
+
+  function load(key, fallback){
+    try{
+      const v = JSON.parse(localStorage.getItem(key));
+      return (v && typeof v === 'object') ? Object.assign({}, fallback, v) : fallback;
+    }catch(e){ return fallback; }
+  }
+  const save = (key, val) => { try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} };
+
+  function target(){ return DB.find(p => norm(p.name) === game.target) || DB[0]; }
+  const guessedNames = () => new Set((game.guesses || []).map(g => norm(g.name)));
+
+  function newGame(silent){
+    const pick = DB[Math.floor(Math.random() * DB.length)];
+    game = { target: norm(pick.name), guesses: [], done:false, started:Date.now() };
+    save(G_KEY, game);
+    renderBoard(false);
+    input.disabled = false;
+    input.placeholder = 'Futbolcu adı yaz (örn. Arda Güler)…';
+    input.value = ''; closeAc();
+    if(!silent) toast('Yeni oyun başladı ⚽');
+    input.focus();
+  }
+
+  /* ---------- Değerlendirme ---------- */
+  function evaluate(g){
+    const t = target();
+    const diff = g.age - t.age;
+    return {
+      country: norm(g.country) === norm(t.country) ? 'ok' : 'no',
+      league:  norm(g.league)  === norm(t.league)  ? 'ok' : 'no',
+      pos:     norm(g.pos)     === norm(t.pos)     ? 'ok' : 'no',
+      age:     diff === 0 ? 'ok' : (Math.abs(diff) <= 2 ? 'near' : 'no'),
+      diff
+    };
+  }
+
+  /* ---------- Çizim ---------- */
+  function cell(text, state, cls){
+    const d = document.createElement('div');
+    d.className = 'cell ' + (state || '') + (cls ? ' ' + cls : '');
+    d.textContent = text;
+    return d;
+  }
+
+  function buildRow(g, fresh){
+    const r = evaluate(g);
+    const row = document.createElement('div');
+    row.className = 'row' + (fresh ? ' fresh' : '');
+
+    const name = document.createElement('div');
+    name.className = 'cell name';
+    name.textContent = g.name;
+    row.appendChild(name);
+
+    row.appendChild(cell(g.country, r.country));
+    row.appendChild(cell(g.league, r.league));
+    row.appendChild(cell(posLong(g.pos), r.pos));
+
+    const age = document.createElement('div');
+    age.className = 'cell ' + r.age;
+    const big = document.createElement('span');
+    big.className = 'big';
+    big.textContent = g.age + (r.diff < 0 ? ' ⬆️' : r.diff > 0 ? ' ⬇️' : ' ✓');
+    age.appendChild(big);
+    row.appendChild(age);
+    return row;
+  }
+
+  function renderBoard(freshLast){
+    guessesContainer.innerHTML = '';
+    const gs = game.guesses || [];
+    gs.forEach((g, i) => guessesContainer.appendChild(buildRow(g, freshLast && i === gs.length - 1)));
+    $('#empty').style.display = gs.length ? 'none' : 'block';
+    $('#guessCount').textContent = gs.length;
+    $('#poolCount').textContent = DB.length;
+    $('#streak').textContent = stats.streak || 0;
+  }
+
+  /* ---------- Tahmin ---------- */
+  function makeGuess(p){
+    if(game.done){ toast('Bu oyun bitti — yeni oyun başlat 🔄'); return; }
+    if(guessedNames().has(norm(p.name))){
+      toast('Bu futbolcuyu zaten denedin 👀');
+      searchBox.classList.remove('shake'); void searchBox.offsetWidth; searchBox.classList.add('shake');
+      return;
+    }
+    game.guesses.unshift(p);
+    const win = norm(p.name) === game.target;
+    if(win){ game.done = true; input.disabled = true; input.placeholder = 'Oyun tamamlandı 🎉'; }
+    save(G_KEY, game);
+    renderBoard(true);
+    closeAc();
+    input.value = '';
+    updateBtn();
+
+    if(win){
+      stats.games += 1; stats.wins += 1;
+      stats.streak = (stats.streak || 0) + 1;
+      stats.best = Math.max(stats.best || 0, stats.streak);
+      save(S_KEY, stats);
+      $('#streak').textContent = stats.streak;
+      setTimeout(() => showWin(game.guesses.length), 900);
+    }else{
+      input.focus();
+    }
+  }
+
+  /* ---------- Kazanma ekranı ---------- */
+  function showWin(tries){
+    const t = target();
+    $('#winModal .win-name').textContent = t.name;
+    $('#winSub').textContent = `${tries} denemede buldun — tebrikler! 🎉`;
+    const n = Math.min(tries, 5);
+    $('#winStars').textContent = '★'.repeat(n) + (tries > 5 ? ' ×' + tries : '');
+    $('#stGames').textContent = stats.games;
+    $('#stWins').textContent  = stats.wins;
+    $('#stStreak').textContent = stats.streak;
+    $('#stBest').textContent = stats.best;
+    openModal('winModal');
+    confetti();
+  }
+
+  function confetti(){
+    const colors = ['#29AB87','#38bdf8','#fd5c63','#f5a524','#a78bfa','#f8fafc'];
+    const n = window.innerWidth < 560 ? 45 : 80;
+    for(let i = 0; i < n; i++){
+      const c = document.createElement('i');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty('--x', (Math.random() * 220 - 110) + 'px');
+      c.style.setProperty('--r', (Math.random() * 900 - 450) + 'deg');
+      c.style.animation = `fall ${1.5 + Math.random() * 1.6}s linear ${Math.random() * .5}s forwards`;
+      c.style.width = (6 + Math.random() * 5) + 'px';
+      c.style.height = (9 + Math.random() * 8) + 'px';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3600);
+    }
+  }
+
+  /* ---------- Otomatik tamamlama ---------- */
+  let acItems = [], acIndex = -1;
+
+  function updateAc(){
+    const raw = input.value;
+    const val = norm(raw);
+    acList.innerHTML = ''; acItems = []; acIndex = -1;
+    updateBtn();
+    if(!val){ closeAc(); return; }
+
+    const used = guessedNames();
+    const scored = DB.filter(p => norm(p.name).includes(val))
+      .map(p => {
+        const n = norm(p.name);
+        let s = 2;
+        if(n.startsWith(val)) s = 0;
+        else if(n.split(' ').some(w => w.startsWith(val))) s = 1;
+        return { p, s };
+      })
+      .sort((a,b) => a.s - b.s || a.p.name.localeCompare(b.p.name, 'tr'))
+      .slice(0, 8);
+
+    if(!scored.length){
+      const none = document.createElement('div');
+      none.className = 'ac-none';
+      none.textContent = '“' + raw.trim() + '” için sonuç yok';
+      acList.appendChild(none);
+      acList.classList.add('open');
+      return;
+    }
+
+    for(const { p } of scored){
+      const isUsed = used.has(norm(p.name));
+      const item = document.createElement('div');
+      item.className = 'ac-item' + (isUsed ? ' used' : '');
+
+      const name = document.createElement('div');
+      name.className = 'ac-name';
+      appendHighlighted(name, p.name, val);
+
+      const meta = document.createElement('div');
+      meta.className = 'ac-meta';
+      meta.textContent = isUsed ? '✓ denendi' : `${p.league} · ${posLong(p.pos)} · ${p.age}`;
+
+      item.append(name, meta);
+      if(!isUsed){
+        item.addEventListener('mousedown', e => { e.preventDefault(); makeGuess(p); });
+      }else{
+        item.addEventListener('mousedown', e => { e.preventDefault(); toast('Bu futbolcuyu zaten denedin 👀'); });
+      }
+      acList.appendChild(item);
+      acItems.push({ el:item, player:p, used:isUsed });
+    }
+    acList.classList.add('open');
+  }
+
+  function appendHighlighted(container, text, q){
+    const n = norm(text);
+    const i = n.indexOf(q);
+    if(i < 0 || !q){ container.textContent = text; return; }
+    const before = text.slice(0, i), hit = text.slice(i, i + q.length), after = text.slice(i + q.length);
+    container.appendChild(document.createTextNode(before));
+    const em = document.createElement('em'); em.textContent = hit; container.appendChild(em);
+    container.appendChild(document.createTextNode(after));
+  }
+
+  function closeAc(){ acList.classList.remove('open'); acIndex = -1; }
+
+  function moveAc(dir){
+    const usable = acItems.filter(i => !i.used);
+    if(!usable.length) return;
+    acItems.forEach(i => i.el.classList.remove('active'));
+    acIndex = (acIndex + dir + usable.length) % usable.length;
+    const el = usable[acIndex].el;
+    el.classList.add('active');
+    if (el.scrollIntoView) el.scrollIntoView({ block:'nearest' });
+  }
+
+  function updateBtn(){
+    const val = norm(input.value);
+    $('#guessBtn').disabled = !(val && DB.some(p => norm(p.name).includes(val)) && !game.done);
+  }
+
+  /* ---------- Modal / bildirim ---------- */
+  function openModal(id){ $('#' + id).classList.add('open'); }
+  function closeModal(id){ $('#' + id).classList.remove('open'); }
+
+  let toastTimer;
+  function toast(msg){
+    const t = $('#toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  /* ---------- Olaylar ---------- */
+  input.addEventListener('input', updateAc);
+  input.addEventListener('focus', () => { if(input.value) updateAc(); });
+  input.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown'){ e.preventDefault(); if(!acList.classList.contains('open')) updateAc(); moveAc(1); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); moveAc(-1); }
+    else if(e.key === 'Enter'){
+      e.preventDefault();
+      const chosen = acIndex >= 0 ? acItems.filter(i => !i.used)[acIndex] : null;
+      if(chosen){ makeGuess(chosen.player); return; }
+      const val = norm(input.value);
+      if(!val) return;
+      const exact = DB.find(p => norm(p.name) === val)
+                 || DB.find(p => norm(p.name).startsWith(val))
+                 || DB.find(p => norm(p.name).includes(val));
+      if(exact) makeGuess(exact);
+      else { toast('Listede böyle bir futbolcu yok 🤔'); searchBox.classList.remove('shake'); void searchBox.offsetWidth; searchBox.classList.add('shake'); }
+    }
+    else if(e.key === 'Escape'){ closeAc(); }
+  });
+
+  $('#guessBtn').addEventListener('click', () => {
+    const val = norm(input.value);
+    const exact = DB.find(p => norm(p.name) === val) || DB.find(p => norm(p.name).startsWith(val)) || DB.find(p => norm(p.name).includes(val));
+    if(exact) makeGuess(exact); else toast('Önce listeden bir futbolcu seç 👆');
+  });
+
+  document.addEventListener('click', e => { if(!e.target.closest('.search-wrap')) closeAc(); });
+
+  $('#newBtn').addEventListener('click', () => {
+    if((game.guesses || []).length && !game.done && !confirm('Mevcut oyunu bırakıp yeni oyun başlatılsın mı?')) return;
+    if((game.guesses || []).length && !game.done){ stats.games += 1; save(S_KEY, stats); }
+    newGame();
+  });
+  $('#winNew').addEventListener('click', () => { closeModal('winModal'); newGame(); });
+
+  $('#helpBtn').addEventListener('click', () => openModal('helpModal'));
+  $('#helpBtn2').addEventListener('click', () => openModal('helpModal'));
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+  document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+    if(e.key === '/' && document.activeElement !== input){ e.preventDefault(); input.focus(); }
+  });
+
+  /* ---------- Başlat ---------- */
+  const saved = load(G_KEY, null);
+  const valid = saved && saved.target && DB.some(p => norm(p.name) === saved.target) && Array.isArray(saved.guesses);
+  if(valid){
+    game = saved;
+    input.disabled = !!game.done;
+    if(game.done) input.placeholder = 'Oyun tamamlandı 🎉';
+  }else{
+    game = { target: norm(DB[Math.floor(Math.random() * DB.length)].name), guesses: [], done:false, started:Date.now() };
+    save(G_KEY, game);
+  }
+  renderBoard(false);
+  updateBtn();
+})();
+</script>
+</body>
+</html>
