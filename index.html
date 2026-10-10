@@ -324,7 +324,7 @@
   </div>
 
   <div class="meta">
-    <span class="pill"><span class="dot"></span>Deneme: <b id="guessCount">0</b></span>
+    <span class="pill"><span class="dot"></span>Deneme: <b id="guessCount">0</b>/10</span>
     <span class="pill"><b id="poolCount">0</b> futbolcu</span>
     <span class="pill">🔥 Seri: <b id="streak">0</b></span>
   </div>
@@ -372,7 +372,7 @@
       <h2 id="helpTitle">Nasıl oynanır?</h2>
       <button class="close-x" data-close="helpModal" aria-label="Kapat">×</button>
     </div>
-    <p>Gizli bir futbolcu seçilir. İstediğin kadar futbolcu tahmin ederek onu bulmaya çalış. Her tahminin ardından 5 kutu renk alır.</p>
+    <p>Gizli bir futbolcu seçilir. En fazla 10 hakkın var. Her tahminin ardından 5 kutu renk alır.</p>
 
     <h3>Örnek</h3>
     <div class="demo-row">
@@ -391,11 +391,11 @@
   </div>
 </div>
 
-<!-- Kazanma -->
+<!-- Kazanma / Kaybetme Bildirim Modalı -->
 <div class="modal" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle">
   <div class="modal-card" style="position:relative">
     <button class="close-x" data-close="winModal" aria-label="Kapat" style="position:absolute;top:16px;right:16px">×</button>
-    <span class="win-emoji">🏆</span>
+    <span class="win-emoji" id="winEmoji">🏆</span>
     <h2 id="winTitle" class="win-name" style="margin-top:0">—</h2>
     <p class="win-sub" id="winSub">Tebrikler, doğru tahmin!</p>
     <div class="stars" id="winStars"></div>
@@ -897,7 +897,14 @@
     }
     game.guesses.unshift(p);
     const win = norm(p.name) === game.target;
-    if(win){ game.done = true; input.disabled = true; input.placeholder = 'Oyun tamamlandı 🎉'; }
+    const isLimitReached = !win && game.guesses.length >= 10;
+
+    if(win || isLimitReached){ 
+      game.done = true; 
+      input.disabled = true; 
+      input.placeholder = win ? 'Oyun tamamlandı 🎉' : 'Haklar bitti ❌'; 
+    }
+    
     save(G_KEY, game);
     renderBoard(true);
     closeAc();
@@ -910,25 +917,40 @@
       stats.best = Math.max(stats.best || 0, stats.streak);
       save(S_KEY, stats);
       $('#streak').textContent = stats.streak;
-      setTimeout(() => showWin(game.guesses.length), 900);
-    }else{
+      setTimeout(() => showEndModal(true, game.guesses.length), 900);
+    } else if(isLimitReached){
+      stats.games += 1; 
+      stats.streak = 0;
+      save(S_KEY, stats);
+      $('#streak').textContent = stats.streak;
+      setTimeout(() => showEndModal(false, game.guesses.length), 900);
+    } else {
       input.focus();
     }
   }
 
-  /* ---------- Kazanma ekranı ---------- */
-  function showWin(tries){
+  /* ---------- Bitiş Ekranı (Kazanma / Kaybetme) ---------- */
+  function showEndModal(win, tries){
     const t = target();
     $('#winModal .win-name').textContent = t.name;
-    $('#winSub').textContent = `${tries} denemede buldun — tebrikler! 🎉`;
-    const n = Math.min(tries, 5);
-    $('#winStars').textContent = '★'.repeat(n) + (tries > 5 ? ' ×' + tries : '');
+    
+    if(win){
+      $('#winEmoji').textContent = '🏆';
+      $('#winSub').textContent = `${tries} denemede buldun — tebrikler! 🎉`;
+      const n = Math.min(tries, 5);
+      $('#winStars').textContent = '★'.repeat(n);
+    } else {
+      $('#winEmoji').textContent = '❌';
+      $('#winSub').textContent = `10 hakkın bitti! Gizli oyuncu: ${t.name}`;
+      $('#winStars').textContent = 'Maalesef bilemedin';
+    }
+
     $('#stGames').textContent = stats.games;
     $('#stWins').textContent  = stats.wins;
     $('#stStreak').textContent = stats.streak;
     $('#stBest').textContent = stats.best;
     openModal('winModal');
-    confetti();
+    if(win) confetti();
   }
 
   function confetti(){
@@ -1095,7 +1117,7 @@
   if(valid){
     game = saved;
     input.disabled = !!game.done;
-    if(game.done) input.placeholder = 'Oyun tamamlandı 🎉';
+    if(game.done) input.placeholder = game.guesses.length >= 10 && norm(game.guesses[0]?.name || '') !== game.target ? 'Haklar bitti ❌' : 'Oyun tamamlandı 🎉';
   }else{
     game = { target: norm(DB[Math.floor(Math.random() * DB.length)].name), guesses: [], done:false, started:Date.now() };
     save(G_KEY, game);
